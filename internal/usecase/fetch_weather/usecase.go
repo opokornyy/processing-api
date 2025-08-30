@@ -20,10 +20,17 @@ func NewFetchWeatherUseCase(api WeatherAPI, weatherRepo WeatherRepository) *Fetc
 
 // Execute fetches weather data for a location and stores it
 func (uc *FetchWeatherUseCase) Execute(ctx context.Context, location weather.Location) (*weather.WeatherData, error) {
-	// TODO: 1. Fetch weather data from external API
-	// TODO: 2. Create weather entity with proper ID
-	// TODO: 3. Save to repository
-	// TODO: 4. Return the weather data
+	// 1. Fetch weather data from external API
+	weatherData, err := uc.weatherApi.GetCurrentWeather(ctx, location)
+	if err != nil {
+		return nil, err
+	}
 
-	return nil, nil
+	// 2. Save to repository
+	if err := uc.weatherRepo.Save(ctx, weatherData); err != nil {
+		return nil, err
+	}
+
+	// 3. Return the weather data
+	return weatherData, nil
 }

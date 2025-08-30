@@ -3,13 +3,15 @@ package config
 import "github.com/rs/zerolog"
 
 type Config struct {
-	// Add config fields
+	Port string
 }
 
 func NewConfig() *Config {
-	// TODO: make it configurable with envs
+	// TODO: load configuration form .env
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	zerolog.SetGlobalLevel(zerolog.InfoLevel)
 
-	return &Config{}
+	return &Config{
+		Port: "8080",
+	}
 }

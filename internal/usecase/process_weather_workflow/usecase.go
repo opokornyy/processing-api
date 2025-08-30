@@ -8,9 +8,9 @@ import (
 
 // ProcessWeatherWorkflowUseCase orchestrates the complete weather processing workflow
 type ProcessWeatherWorkflowUseCase struct {
-	fetchWeatherUseCase         *fetchweather.FetchWeatherUseCase
+	fetchWeatherUseCase            *fetchweather.FetchWeatherUseCase
 	generateRecommendationsUseCase *generaterecommendations.GenerateRecommendationsUseCase
-	notificationService         NotificationService
+	notificationService            NotificationService
 }
 
 // NewProcessWeatherWorkflowUseCase creates a new instance of the workflow usecase
@@ -20,9 +20,9 @@ func NewProcessWeatherWorkflowUseCase(
 	notificationService NotificationService,
 ) *ProcessWeatherWorkflowUseCase {
 	return &ProcessWeatherWorkflowUseCase{
-		fetchWeatherUseCase:         fetchWeatherUseCase,
+		fetchWeatherUseCase:            fetchWeatherUseCase,
 		generateRecommendationsUseCase: generateRecommendationsUseCase,
-		notificationService:         notificationService,
+		notificationService:            notificationService,
 	}
 }
 
@@ -31,6 +31,6 @@ func (uc *ProcessWeatherWorkflowUseCase) Execute(location weather.Location) erro
 	// TODO: 1. Fetch weather data for location
 	// TODO: 2. Generate AI recommendations based on weather
 	// TODO: 3. Send recommendation via notification service
-	
+
 	return nil
 }

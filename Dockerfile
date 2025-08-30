@@ -12,7 +12,7 @@ COPY . .
 # Build
 RUN CGO_ENABLED=0 GOOS=linux go build -o /app/main ./cmd/app
 
-FROM scratch
+FROM alpine:latest
 
 COPY --from=builder /app/main /main
 
