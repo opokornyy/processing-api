@@ -2,10 +2,13 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
+	"processing-api/internal/adapters/repository"
+	weatherapi "processing-api/internal/adapters/weather_api"
 	"processing-api/internal/domain/weather"
 	fetchweather "processing-api/internal/usecase/fetch_weather"
 
@@ -35,7 +38,7 @@ func (wh *WeatherHandler) GetWeatherForLocation(w http.ResponseWriter, r *http.R
 	weatherLocation, err := parseLocationParams(r)
 	if err != nil {
 		log.Error().Msg("Failed to parse the location")
-		wh.writeErrorResponse(w, http.StatusBadRequest, "location_invalid", err.Error())
+		writeErrorResponse(w, http.StatusBadRequest, "location_invalid", err.Error())
 		return
 	}
 	log.Info().Msgf(
@@ -46,8 +49,7 @@ func (wh *WeatherHandler) GetWeatherForLocation(w http.ResponseWriter, r *http.R
 
 	weatherData, err := wh.fetchWeatherUC.Execute(r.Context(), *weatherLocation)
 	if err != nil {
-		log.Err(err).Msg("Failed to fetch the weather data")
-		wh.writeErrorResponse(w, http.StatusBadGateway, "weather_unvailable", fmt.Sprintf("Weather not found for location: %s/%s", weatherLocation.Country, weatherLocation.City))
+		handleFetchWeatherErr(err, w, weatherLocation)
 		return
 	}
 
@@ -62,7 +64,7 @@ func (wh *WeatherHandler) GetWeatherForLocation(w http.ResponseWriter, r *http.R
 
 	data, err := json.Marshal(response)
 	if err != nil {
-		wh.writeErrorResponse(w, 500, err.Error(), "Failed to serialize")
+		writeErrorResponse(w, http.StatusInternalServerError, "serialization_error", fmt.Sprintf("Failed to serialize response: %v", err))
 		return
 	}
 
@@ -72,7 +74,43 @@ func (wh *WeatherHandler) GetWeatherForLocation(w http.ResponseWriter, r *http.R
 	w.Write(data)
 }
 
-func (wh *WeatherHandler) writeErrorResponse(w http.ResponseWriter, statusCode int, errorType, message string) {
+func handleFetchWeatherErr(err error, w http.ResponseWriter, weatherLocation *weather.Location) {
+	var statusCode int
+	var errorCode string
+	var userMessage string
+
+	switch {
+	case errors.Is(err, repository.ErrNotFound):
+		statusCode = http.StatusNotFound
+		errorCode = "location_not_found"
+		userMessage = fmt.Sprintf("No weather data could be found for %s, %s.", weatherLocation.City, weatherLocation.Country)
+
+	case errors.Is(err, repository.ErrEmptyData):
+		statusCode = http.StatusBadRequest
+		errorCode = "missing_data"
+		userMessage = "Can not store empty data"
+
+	case errors.Is(err, weatherapi.ErrMissingArgs):
+		statusCode = http.StatusBadRequest
+		errorCode = "invalid_request"
+		userMessage = "city and country are required."
+
+	case errors.Is(err, weatherapi.ErrFetchingWeather):
+		statusCode = http.StatusBadRequest
+		errorCode = "external_api_error"
+		userMessage = "There was a problem fetching data from the external weather service."
+
+	default:
+		statusCode = http.StatusInternalServerError
+		errorCode = "internal_error"
+		userMessage = "An unexpected error occurred. Please try again later."
+		log.Err(err).Msg("Unknown error in weather handler")
+	}
+
+	writeErrorResponse(w, statusCode, errorCode, userMessage)
+}
+
+func writeErrorResponse(w http.ResponseWriter, statusCode int, errorType, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 

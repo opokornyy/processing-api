@@ -2,11 +2,14 @@ package mock
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"sync"
 
+	"processing-api/internal/adapters/repository"
 	"processing-api/internal/domain/weather"
 )
+
+const mockWeatherRepositoryName = "MockWeatherRepository"
 
 // MockWeatherRepository implements WeatherRepository interface for testing
 type MockWeatherRepository struct {
@@ -68,7 +71,11 @@ func (m *MockWeatherRepository) seedData() {
 // Save stores weather data in memory
 func (m *MockWeatherRepository) Save(ctx context.Context, weatherData *weather.WeatherData) error {
 	if weatherData == nil {
-		return errors.New("weather data cannot be nil")
+		return repository.RepositoryError{
+			RepositoryName: mockWeatherRepositoryName,
+			Message:        "weather data are nil",
+			Err:            repository.ErrEmptyData,
+		}
 	}
 
 	m.mu.Lock()
@@ -89,7 +96,11 @@ func (m *MockWeatherRepository) GetLatestByLocation(ctx context.Context, locatio
 	locationKey := m.getLocationKey(location)
 	weatherData, exists := m.byLocation[locationKey]
 	if !exists {
-		return nil, errors.New("weather data not found for location")
+		return nil, repository.RepositoryError{
+			RepositoryName: mockWeatherRepositoryName,
+			Message:        fmt.Sprintf("weather data not found for location: %s", location),
+			Err:            repository.ErrNotFound,
+		}
 	}
 
 	return weatherData, nil

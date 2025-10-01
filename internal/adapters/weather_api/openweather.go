@@ -2,12 +2,11 @@ package weatherapi
 
 import (
 	"context"
-	"fmt"
 
 	"processing-api/internal/domain/weather"
-
-	"github.com/rs/zerolog/log"
 )
+
+const openWeatherName = "OpenWeather"
 
 type WeatherAPI struct{}
 
@@ -17,8 +16,11 @@ func NewWeatherAPI() *WeatherAPI {
 
 func (wa *WeatherAPI) GetCurrentWeather(ctx context.Context, location weather.Location) (*weather.WeatherData, error) {
 	if location.City == "" || location.Country == "" {
-		log.Error().Msgf("openWeather: location.city and location.country are required: %v", location)
-		return nil, fmt.Errorf("openWeather: location.city and location.country are required")
+		return nil, WeatherApiError{
+			ApiName: openWeatherName,
+			Message: "city and country are required",
+			Err:     ErrMissingArgs,
+		}
 	}
 
 	// Mock weather data for OpenWeather API
@@ -28,5 +30,6 @@ func (wa *WeatherAPI) GetCurrentWeather(ctx context.Context, location weather.Lo
 		weather.Temperature{Celsius: 22.5},
 		65.0,
 	)
+
 	return mockWeather, nil
 }
