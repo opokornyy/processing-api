@@ -13,4 +13,4 @@ build-container:
 # 'build-container' is now a prerequisite for 'run'
 run: build-container
 	@echo "Running container $(IMAGE_NAME)..."
-	@podman run -d --name $(IMAGE_NAME) -p 8080:8080 $(IMAGE_NAME):$(IMAGE_TAG)
+	@podman run -d --name $(IMAGE_NAME) --env-file ../.env -p 8080:8080 $(IMAGE_NAME):$(IMAGE_TAG)

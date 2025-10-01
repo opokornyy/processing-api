@@ -28,9 +28,9 @@ func Run(cfg config.Config) {
 		Handler: mux,
 	}
 
-	weatherAPi := weatherapi.NewWeatherAPI()
+	weatherAPI := weatherapi.NewWeatherAPI(cfg)
 	weatherRepo := mock.NewMockWeatherRepository()
-	fetchWeatherUC := fetchweather.NewFetchWeatherUseCase(weatherAPi, weatherRepo)
+	fetchWeatherUC := fetchweather.NewFetchWeatherUseCase(weatherAPI, weatherRepo)
 
 	// Create weather handlers
 	weatherHandler := handlers.NewWeatherHandler(fetchWeatherUC)
